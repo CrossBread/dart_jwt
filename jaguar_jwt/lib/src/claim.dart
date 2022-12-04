@@ -82,13 +82,11 @@ class JwtClaim {
       Map<String, dynamic?>? payload,
       bool defaultIatExp = true,
       Duration? maxAge})
-      : issuedAt = issuedAt?.toUtc() ??
-            ((defaultIatExp) ? DateTime.now().toUtc() : null),
+      : issuedAt = issuedAt?.toUtc() ?? ((defaultIatExp) ? DateTime.now().toUtc() : null),
         notBefore = notBefore?.toUtc(),
         expiry = expiry?.toUtc() ??
             ((defaultIatExp)
-                ? ((issuedAt?.toUtc() ?? DateTime.now().toUtc())
-                    .add(maxAge ?? defaultMaxAge))
+                ? ((issuedAt?.toUtc() ?? DateTime.now().toUtc()).add(maxAge ?? defaultMaxAge))
                 : null) {
     // Check and record any non-registered claims
     if (otherClaims != null) {
@@ -96,8 +94,7 @@ class JwtClaim {
       // Registered claims MUST be set using the specific parameter for them.
       for (String k in otherClaims.keys) {
         if (registeredClaimNames.contains(k)) {
-          throw ArgumentError.value(k, 'otherClaims',
-              'registred claim not permmitted in otherClaims');
+          throw ArgumentError.value(k, 'otherClaims', 'registred claim not permmitted in otherClaims');
         }
       }
       _otherClaims.addAll(otherClaims);
@@ -118,8 +115,7 @@ class JwtClaim {
   /// and [maxAge] control these default values.
   ///
   /// Throws [JwtException.invalidToken] if the Map is not suitable.
-  factory JwtClaim.fromMap(Map<dynamic, dynamic> data,
-      {bool defaultIatExp = true, Duration? maxAge}) {
+  factory JwtClaim.fromMap(Map<dynamic, dynamic> data, {bool defaultIatExp = true, Duration? maxAge}) {
     final singleStringValue = <String, String>{};
     for (var claimName in ['iss', 'sub', 'jti']) {
       if (data.containsKey(claimName)) {
@@ -368,11 +364,7 @@ class JwtClaim {
   /// the clock of the system that created the token and the clock of the system
   /// doing the validation. By default, there is no allowance for clock skew
   /// (i.e. it defaults to a duration of zero).
-  void validate(
-      {String? issuer,
-      String? audience,
-      Duration? allowedClockSkew,
-      DateTime? currentTime}) {
+  void validate({String? issuer, String? audience, Duration? allowedClockSkew, DateTime? currentTime}) {
     // Ensure clock skew has a value and is never negative
     final absClockSkew = allowedClockSkew?.abs() ?? const Duration();
 
@@ -447,7 +439,7 @@ class JwtClaim {
       body['sub'] = subject!;
     }
     if (audience != null) {
-      body['aud'] = audience!;
+      body['aud'] = audience!.length == 1 ? audience!.first : audience!;
     }
     if (expiry != null) {
       body['exp'] = JwtDate.encode(expiry!);
@@ -485,15 +477,7 @@ class JwtClaim {
   ///
   /// For their defintion, see section 4.1 of
   /// [RFC 7519](https://tools.ietf.org/html/rfc7519#section-4.1).
-  static const List<String> registeredClaimNames = const [
-    'iss',
-    'sub',
-    'aud',
-    'exp',
-    'nbf',
-    'iat',
-    'jti'
-  ];
+  static const List<String> registeredClaimNames = const ['iss', 'sub', 'aud', 'exp', 'nbf', 'iat', 'jti'];
 
   /// Default duration between issued time and expiry time.
   ///
