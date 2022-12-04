@@ -1,6 +1,6 @@
-name: dart_jwt
+name: jaguar_jwt
 description: Provides JWT utilities for Dart including issuing a token, verifing a token and parsing a token.
-version: 3.1.0
+version: 3.1.1
 homepage: https://github.com/CrossBread/dart_jwt
 
 documentation: https://github.com/CrossBread/dart_jwt
