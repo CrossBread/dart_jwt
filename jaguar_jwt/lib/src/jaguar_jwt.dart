@@ -30,20 +30,18 @@ import 'exception.dart';
 ///       payload: {'k': 'v'});
 ///       String token = issueJwtHS256(claimSet, key);
 ///       print(token);
-String issueJwtHS256(JwtClaim claimSet, String hmacKey) {
+String issueJwtHS256(JwtClaim claimSet, String hmacKey, {Map<String, String>? customHeaderEntries}) {
   final hmac = Hmac(sha256, hmacKey.codeUnits);
 
   // Use SplayTreeMap to ensure ordering in JSON: i.e. alg before typ.
   // Ordering is not required for JWT: it is deterministic and neater.
   final header = SplayTreeMap<String, String>.from(
-      <String, String>{'alg': 'HS256', 'typ': 'JWT'});
+      <String, String>{'alg': 'HS256', 'typ': 'JWT', ...?customHeaderEntries});
 
   final String encHdr = B64urlEncRfc7515.encodeUtf8(json.encode(header));
-  final String encPld =
-      B64urlEncRfc7515.encodeUtf8(json.encode(claimSet.toJson()));
+  final String encPld = B64urlEncRfc7515.encodeUtf8(json.encode(claimSet.toJson()));
   final String data = '${encHdr}.${encPld}';
-  final String encSig =
-      B64urlEncRfc7515.encode(hmac.convert(data.codeUnits).bytes);
+  final String encSig = B64urlEncRfc7515.encode(hmac.convert(data.codeUnits).bytes);
   return data + '.' + encSig;
 }
 
@@ -108,8 +106,7 @@ JwtClaim verifyJwtHS256Signature(String token, String hmacKey,
     final dynamic header = json.decode(headerString);
     if (header is Map) {
       // Perform any custom checks on the header
-      if (headerCheck != null &&
-          !headerCheck(header.cast<String, dynamic?>())) {
+      if (headerCheck != null && !headerCheck(header.cast<String, dynamic?>())) {
         throw JwtException.invalidToken;
       }
 
@@ -125,15 +122,13 @@ JwtClaim verifyJwtHS256Signature(String token, String hmacKey,
     final calcSig = hmac.convert(data.codeUnits).bytes;
     final tokenSig = B64urlEncRfc7515.decode(parts[2]);
     // Signature does not match calculated
-    if (!secureCompareIntList(calcSig, tokenSig))
-      throw JwtException.hashMismatch;
+    if (!secureCompareIntList(calcSig, tokenSig)) throw JwtException.hashMismatch;
 
     // Convert payload into a claim set
     final payloadString = B64urlEncRfc7515.decodeUtf8(parts[1]);
     final dynamic payload = json.decode(payloadString);
     if (payload is Map) {
-      return JwtClaim.fromMap(payload.cast(),
-          defaultIatExp: defaultIatExp, maxAge: maxAge);
+      return JwtClaim.fromMap(payload.cast(), defaultIatExp: defaultIatExp, maxAge: maxAge);
     } else {
       throw JwtException.payloadNotJson; // is JSON, but not a JSON object
     }

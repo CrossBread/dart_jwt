@@ -40,15 +40,12 @@ void main() {
 
       // Verify signature
 
-      final claimSet =
-          verifyJwtHS256Signature(token, hmacKey, defaultIatExp: false);
+      final claimSet = verifyJwtHS256Signature(token, hmacKey, defaultIatExp: false);
       expect(claimSet, isNotNull);
 
       // Validate the claim set
 
-      claimSet.validate(
-          issuer: issuer,
-          currentTime: exp.subtract(const Duration(seconds: 60)));
+      claimSet.validate(issuer: issuer, currentTime: exp.subtract(const Duration(seconds: 60)));
     });
 
     //----------------------------------------------------------------
@@ -77,15 +74,13 @@ void main() {
         'token is three periods': '...',
         'token is missing signature part': '1234.5678',
         'token has too many parts': '1111.2222.3333.4444',
-        'encoded payload is empty string':
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..'
-                'iE8S5laiOzOYJxr411Fw2HrI9I-n2F8MREyuXFwqCDo',
+        'encoded payload is empty string': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..'
+            'iE8S5laiOzOYJxr411Fw2HrI9I-n2F8MREyuXFwqCDo',
       };
       assert(badTokens.isNotEmpty);
 
       badTokens.forEach((desc, token) {
-        expect(() => verifyJwtHS256Signature(token, secret),
-            throwsA(equals(JwtException.invalidToken)),
+        expect(() => verifyJwtHS256Signature(token, secret), throwsA(equals(JwtException.invalidToken)),
             reason: 'test failed when $desc');
       });
     });
@@ -103,8 +98,7 @@ void main() {
           'mwiDnq8rTFp5Oyy5i7pT8qktTB4tZOAfiJXTEbEqn2g';
       assert(B64urlEncRfc7515.decodeUtf8(token.split('.')[1]) == '{}');
 
-      final claimSet =
-          verifyJwtHS256Signature(token, secret, defaultIatExp: false);
+      final claimSet = verifyJwtHS256Signature(token, secret, defaultIatExp: false);
 
       // No registered claims
 
@@ -182,8 +176,7 @@ void main() {
           'OlCUOj66oPagFoy0MOKvg5g86ts46mY6A2WhuVhi9c0';
 
       final issuer = 'https://issuer.example.com';
-      final subject =
-          'https://example.com!http://localhost:10000!000abcdefghijklmnopqrstuvwxyz';
+      final subject = 'https://example.com!http://localhost:10000!000abcdefghijklmnopqrstuvwxyz';
       final audience = 'http://audience.example.com';
       final expiry = DateTime.utc(2019, 1, 15, 2, 27, 19);
       final notBefore = DateTime.utc(2019, 1, 15, 2, 25, 19);
@@ -200,9 +193,7 @@ void main() {
       // Validate the claim set
 
       claimSet.validate(
-          issuer: issuer,
-          audience: audience,
-          currentTime: issuedAt.add(const Duration(seconds: 5)));
+          issuer: issuer, audience: audience, currentTime: issuedAt.add(const Duration(seconds: 5)));
 
       // Check claim set has expected values
 
@@ -234,29 +225,23 @@ void main() {
     //================================================================
 
     group('Signature', () {
-      final claimSet = JwtClaim(
-          subject: 'kleak',
-          issuer: 'issuer.example.com',
-          audience: <String>[
-            'audience.example.com'
-          ],
-          otherClaims: <String, dynamic>{
-            'pld': {'foo': 'bar'}
-          });
+      final claimSet = JwtClaim(subject: 'kleak', issuer: 'issuer.example.com', audience: <String>[
+        'audience.example.com'
+      ], otherClaims: <String, dynamic>{
+        'pld': {'foo': 'bar'}
+      });
 
       final correctSecret = 's3cr3t';
       final wrongSecret = 'S3cr3t'; // wrong case for first character
       final token = issueJwtHS256(claimSet, correctSecret);
 
       test('Correct secret verifies', () {
-        expect(verifyJwtHS256Signature(token, correctSecret),
-            const TypeMatcher<JwtClaim>());
+        expect(verifyJwtHS256Signature(token, correctSecret), const TypeMatcher<JwtClaim>());
       });
 
       test('Wrong secret does not verify', () {
         // Verifying with a different secret
-        expect(() => verifyJwtHS256Signature(token, wrongSecret),
-            throwsA(equals(JwtException.hashMismatch)));
+        expect(() => verifyJwtHS256Signature(token, wrongSecret), throwsA(equals(JwtException.hashMismatch)));
       });
 
       test('Tampered header', () {
@@ -314,8 +299,7 @@ void main() {
             try {
               expect(tamperedToken, equals(token));
 
-              expect(verifyJwtHS256Signature(tamperedToken, correctSecret),
-                  const TypeMatcher<JwtClaim>(),
+              expect(verifyJwtHS256Signature(tamperedToken, correctSecret), const TypeMatcher<JwtClaim>(),
                   reason: 'control case failed with header=$header');
             } on Exception catch (e) {
               fail('control case failed (header=$header): threw: $e');
@@ -334,16 +318,14 @@ void main() {
 
         final body = B64urlEncRfc7515.decodeUtf8(parts[1]);
         final t = body.replaceAll('"pld":{"foo":"bar"}', '"pld":{"foo":"baz"}');
-        expect(t, isNot(equals(body)),
-            reason: 'expected substring was not in payload');
+        expect(t, isNot(equals(body)), reason: 'expected substring was not in payload');
 
         final tamperedEncoding = B64urlEncRfc7515.encodeUtf8(t);
         expect(tamperedEncoding, isNot(equals(parts[1])),
             reason: 'tampering did not modify the encoded payload');
 
         final tamperedToken = [parts[0], tamperedEncoding, parts[2]].join('.');
-        expect(tamperedToken, isNot(equals(token)),
-            reason: 'tampering did not modify the JWT');
+        expect(tamperedToken, isNot(equals(token)), reason: 'tampering did not modify the JWT');
 
         expect(() => verifyJwtHS256Signature(tamperedToken, correctSecret),
             throwsA(equals(JwtException.hashMismatch)),
@@ -384,10 +366,30 @@ void main() {
 
           expect(() => verifyJwtHS256Signature(tamperedToken, correctSecret),
               throwsA(equals(JwtException.hashMismatch)),
-              reason:
-                  'signature valid even though signature was tampered with');
+              reason: 'signature valid even though signature was tampered with');
         }
       });
+
+      //----------------------------------------------------------------
+    });
+    test('Custom Header Entries', () {
+      String token = 'eyJhbGciOiJIUzI1NiIsImN1c3RvbUhlYWRlcktleSI6ImN1c3RvbUhlYWRlclZhbHVlIiwidHlwIjoi'
+          'SldUIn0.eyJhdWQiOlsiYWRtaW4iLCJzdHVkZW50cyJdLCJleHAiOjE0ODE5MjkyMDAsImlhdCI6MTQ4MTg0MjgwMCwiaXNzIj'
+          'oidGVqYSIsInBsZCI6eyJrIjoidiJ9LCJzdWIiOiIxMjM0NTY3ODkwIn0.TGy7v2Q_UrmS_chs-gJQaMxnvPyudZacICZ_MJbD'
+          '2Yc';
+      final parts = token.split('.');
+      assert(parts.length == 3);
+
+      verifyJwtHS256Signature(token, key,
+          headerCheck: (joseHeader) =>
+              joseHeader.containsKey('customHeaderKey') &&
+              joseHeader['customHeaderKey'] == 'customHeaderValue');
+
+      expect(
+        () => verifyJwtHS256Signature(token, key,
+            headerCheck: (joseHeader) => joseHeader.containsKey('unexpectedKey')),
+        throwsA(equals(JwtException.invalidToken)),
+      );
     });
   });
 }
